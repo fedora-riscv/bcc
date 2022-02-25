@@ -22,16 +22,15 @@
 %global with_llvm_shared 1
 %endif
 
-# Force out of source build
-%undefine __cmake_in_source_build
 
 Name:           bcc
-Version:        0.22.0
-Release:        3%{?dist}
+Version:        0.24.0
+Release:        1%{?dist}
 Summary:        BPF Compiler Collection (BCC)
 License:        ASL 2.0
 URL:            https://github.com/iovisor/bcc
 Source0:        %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
+Patch0:         libbpf-tools-Allow-to-use-different-cflags-for-bpf-t.patch
 
 # Arches will be included as upstream support is added and dependencies are
 # satisfied in the respective arches
@@ -95,7 +94,6 @@ Examples for BPF Compiler Collection (BCC)
 Summary:        Python3 bindings for BPF Compiler Collection (BCC)
 Requires:       %{name} = %{version}-%{release}
 BuildArch:      noarch
-%{?python_provide:%python_provide python3-%{srcname}}
 
 %description -n python3-%{name}
 Python3 bindings for BPF Compiler Collection (BCC)
@@ -113,6 +111,7 @@ Standalone tool to run BCC tracers written in Lua
 
 %package tools
 Summary:        Command line tools for BPF Compiler Collection (BCC)
+Requires:       bcc = %{version}-%{release}
 Requires:       python3-%{name} = %{version}-%{release}
 Requires:       python3-netaddr
 
@@ -134,11 +133,10 @@ Command line libbpf tools for BPF Compiler Collection (BCC)
 
 
 %build
-%cmake . \
-        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-        -DREVISION_LAST=%{version} -DREVISION=%{version} -DPYTHON_CMD=python3 \
-        -DCMAKE_USE_LIBBPF_PACKAGE:BOOL=TRUE \
-        %{?with_llvm_shared:-DENABLE_LLVM_SHARED=1}
+%cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+       -DREVISION_LAST=%{version} -DREVISION=%{version} -DPYTHON_CMD=python3 \
+       -DCMAKE_USE_LIBBPF_PACKAGE:BOOL=TRUE \
+       %{?with_llvm_shared:-DENABLE_LLVM_SHARED=1}
 %cmake_build
 
 # It was discussed and agreed to package libbpf-tools with
@@ -240,6 +238,12 @@ cp -a libbpf-tools/tmp-install/bin/* %{buildroot}/%{_sbindir}/
 %endif
 
 %changelog
+* Tue Apr 19 2022 Jerome Marchand <jmarchan@redhat.com> - 0.24.0-1
+- Rebase to the latest release version
+- Fix cmake build
+- Add explicit Requires: bcc for bcc-tools
+- Remove deprecated python_provide macro
+
 * Wed Jan 19 2022 Fedora Release Engineering <releng@fedoraproject.org> - 0.22.0-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
 
