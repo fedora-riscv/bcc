@@ -1,0 +1,198 @@
+From f47f9a045b70789ca4ed00799d3622ae348c2136 Mon Sep 17 00:00:00 2001
+From: Jerome Marchand <jmarchan@redhat.com>
+Date: Wed, 15 Mar 2023 13:01:28 +0100
+Subject: [PATCH] Porting from distutils to setuptools
+
+Distutils has been deprecated in python 3.10 and will be removed from
+python 3.12. Distutils itself has for a long time recommended to use
+setuptools instead.
+
+This patch migrate from distutils to setuptools mostly using using the
+migration advice from PEP 632:
+https://peps.python.org/pep-0632/
+
+The use of packaging.version.Version() doesn't work with the kernel
+version format of some distribution (incompatible with PEP 440), so I
+replaced it by an adhoc regex parsing.
+
+Also remove a couple of unused distutils import.
+
+Signed-off-by: Jerome Marchand <jmarchan@redhat.com>
+---
+ INSTALL.md                          | 12 ++++++------
+ examples/usdt_sample/usdt_sample.md |  2 +-
+ examples/usdt_sample/usdt_sample.sh |  2 +-
+ snap/snapcraft.yaml                 |  3 +--
+ src/python/setup.py.in              |  2 +-
+ tests/python/test_rlimit.py         |  1 -
+ tests/python/test_tools_smoke.py    |  1 -
+ tests/python/utils.py               | 18 ++++++++++--------
+ 8 files changed, 20 insertions(+), 21 deletions(-)
+
+diff --git a/INSTALL.md b/INSTALL.md
+index da10fc30..abbe8809 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -344,7 +344,7 @@ sudo apt-get install arping bison clang-format cmake dh-python \
+   dpkg-dev pkg-kde-tools ethtool flex inetutils-ping iperf \
+   libbpf-dev libclang-dev libclang-cpp-dev libedit-dev libelf-dev \
+   libfl-dev libzip-dev linux-libc-dev llvm-dev libluajit-5.1-dev \
+-  luajit python3-netaddr python3-pyroute2 python3-distutils python3
++  luajit python3-netaddr python3-pyroute2 python3-setuptools python3
+ ```
+ 
+ #### Install and compile BCC
+@@ -376,23 +376,23 @@ sudo apt-get update
+ 
+ # For Bionic (18.04 LTS)
+ sudo apt-get -y install bison build-essential cmake flex git libedit-dev \
+-  libllvm6.0 llvm-6.0-dev libclang-6.0-dev python zlib1g-dev libelf-dev libfl-dev python3-distutils
++  libllvm6.0 llvm-6.0-dev libclang-6.0-dev python zlib1g-dev libelf-dev libfl-dev python3-setuptools
+ 
+ # For Focal (20.04.1 LTS)
+ sudo apt install -y bison build-essential cmake flex git libedit-dev \
+-  libllvm12 llvm-12-dev libclang-12-dev python zlib1g-dev libelf-dev libfl-dev python3-distutils
++  libllvm12 llvm-12-dev libclang-12-dev python zlib1g-dev libelf-dev libfl-dev python3-setuptools
+ 
+ # For Hirsute (21.04) or Impish (21.10)
+ sudo apt install -y bison build-essential cmake flex git libedit-dev \
+-libllvm11 llvm-11-dev libclang-11-dev python3 zlib1g-dev libelf-dev libfl-dev python3-distutils
++libllvm11 llvm-11-dev libclang-11-dev python3 zlib1g-dev libelf-dev libfl-dev python3-setuptools
+ 
+ # For Jammy (22.04)
+ sudo apt install -y bison build-essential cmake flex git libedit-dev \
+-libllvm14 llvm-14-dev libclang-14-dev python3 zlib1g-dev libelf-dev libfl-dev python3-distutils
++libllvm14 llvm-14-dev libclang-14-dev python3 zlib1g-dev libelf-dev libfl-dev python3-setuptools
+ 
+ # For other versions
+ sudo apt-get -y install bison build-essential cmake flex git libedit-dev \
+-  libllvm3.7 llvm-3.7-dev libclang-3.7-dev python zlib1g-dev libelf-dev python3-distutils
++  libllvm3.7 llvm-3.7-dev libclang-3.7-dev python zlib1g-dev libelf-dev python3-setuptools
+ 
+ # For Lua support
+ sudo apt-get -y install luajit luajit-5.1-dev
+diff --git a/examples/usdt_sample/usdt_sample.md b/examples/usdt_sample/usdt_sample.md
+index d3561322..1eee9038 100644
+--- a/examples/usdt_sample/usdt_sample.md
++++ b/examples/usdt_sample/usdt_sample.md
+@@ -4,7 +4,7 @@
+ ## Ubuntu 21.10 prerequisites
+ 
+ ```bash
+-$ sudo apt-get install linux-headers-$(uname -r) "llvm-13*" libclang-13-dev luajit luajit-5.1-dev libelf-dev python3-distutils libdebuginfod-dev arping netperf iperf
++$ sudo apt-get install linux-headers-$(uname -r) "llvm-13*" libclang-13-dev luajit luajit-5.1-dev libelf-dev python3-setutools libdebuginfod-dev arping netperf iperf
+ ```
+ 
+ ## Building bcc tools
+diff --git a/examples/usdt_sample/usdt_sample.sh b/examples/usdt_sample/usdt_sample.sh
+index 8b147694..2a90d159 100755
+--- a/examples/usdt_sample/usdt_sample.sh
++++ b/examples/usdt_sample/usdt_sample.sh
+@@ -1,6 +1,6 @@
+ #!/usr/bin/bash
+ 
+-# sudo apt-get install linux-headers-$(uname -r) "llvm-13*" libclang-13-dev luajit luajit-5.1-dev libelf-dev python3-distutils libdebuginfod-dev arping netperf iperf
++# sudo apt-get install linux-headers-$(uname -r) "llvm-13*" libclang-13-dev luajit luajit-5.1-dev libelf-dev python3-setuptools libdebuginfod-dev arping netperf iperf
+ # mkdir -p build && cd build
+ # cmake .. -DPYTHON_CMD=python3
+ # make -j4
+diff --git a/snap/snapcraft.yaml b/snap/snapcraft.yaml
+index 9eedafd9..d6c87e3e 100644
+--- a/snap/snapcraft.yaml
++++ b/snap/snapcraft.yaml
+@@ -85,8 +85,7 @@ adopt-info: bcc
+             - libtinfo5
+             - libzzip-0-13
+             - python3
+-            - python3-distutils
+-            - python3-distutils-extra
++            - python3-packaging
+             - python3-pip
+             - python3-setuptools
+         prime:
+diff --git a/src/python/setup.py.in b/src/python/setup.py.in
+index dca35541..46e20602 100644
+--- a/src/python/setup.py.in
++++ b/src/python/setup.py.in
+@@ -1,6 +1,6 @@
+ # Copyright (c) PLUMgrid, Inc.
+ # Licensed under the Apache License, Version 2.0 (the "License")
+-from distutils.core import setup
++from setuptools import setup
+ import os
+ import sys
+ 
+diff --git a/tests/python/test_rlimit.py b/tests/python/test_rlimit.py
+index 040b99c1..39d8aac6 100755
+--- a/tests/python/test_rlimit.py
++++ b/tests/python/test_rlimit.py
+@@ -9,7 +9,6 @@ from __future__ import print_function
+ from bcc import BPF
+ from unittest import main, skipUnless, TestCase
+ from utils import kernel_version_ge
+-import distutils.version
+ import os, resource
+ 
+ @skipUnless(not kernel_version_ge(5, 11), "Since d5299b67dd59 \"bpf: Memcg-based memory accounting for bpf maps\""\
+diff --git a/tests/python/test_tools_smoke.py b/tests/python/test_tools_smoke.py
+index aa821b9e..c8023f74 100755
+--- a/tests/python/test_tools_smoke.py
++++ b/tests/python/test_tools_smoke.py
+@@ -2,7 +2,6 @@
+ # Copyright (c) Sasha Goldshtein, 2017
+ # Licensed under the Apache License, Version 2.0 (the "License")
+ 
+-import distutils.version
+ import subprocess
+ import os
+ import re
+diff --git a/tests/python/utils.py b/tests/python/utils.py
+index 40e7b157..23404787 100644
+--- a/tests/python/utils.py
++++ b/tests/python/utils.py
+@@ -1,10 +1,8 @@
+ from pyroute2 import NSPopen
+-from distutils.spawn import find_executable
+ import traceback
+-import distutils.version
+ import shutil
+ 
+-import logging, os, sys
++import logging, os, sys, re
+ 
+ if 'PYTHON_TEST_LOGFILE' in os.environ:
+     logfile=os.environ['PYTHON_TEST_LOGFILE']
+@@ -15,7 +13,7 @@ import logging, os, sys
+ logger = logging.getLogger()
+ 
+ def has_executable(name):
+-    path = find_executable(name)
++    path = shutil.which(name)
+     if path is None:
+         raise Exception(name + ": command not found")
+     return path
+@@ -82,13 +80,17 @@ logger = logging.getLogger()
+         has_executable(name)
+         super(NSPopenWithCheck, self).__init__(nsname, *argv, **kwarg)
+ 
++KERNEL_VERSION_PATTERN = r"v?(?P<major>[0-9]+)\.(?P<minor>[0-9]+).*"
++
+ def kernel_version_ge(major, minor):
+     # True if running kernel is >= X.Y
+-    version = distutils.version.LooseVersion(os.uname()[2]).version
+-    if version[0] > major:
++    match = re.match(KERNEL_VERSION_PATTERN, os.uname()[2])
++    x = int(match.group("major"))
++    y = int(match.group("minor"))
++    if x > major:
+         return True
+-    if version[0] < major:
++    if x < major:
+         return False
+-    if minor and version[1] < minor:
++    if minor and y < minor:
+         return False
+     return True
+-- 
+2.39.2
+
