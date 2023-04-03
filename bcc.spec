@@ -25,7 +25,7 @@
 
 Name:           bcc
 Version:        0.25.0
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        BPF Compiler Collection (BCC)
 License:        ASL 2.0
 URL:            https://github.com/iovisor/bcc
@@ -239,6 +239,9 @@ cp -a libbpf-tools/tmp-install/bin/* %{buildroot}/%{_sbindir}/
 %endif
 
 %changelog
+* Mon Apr 03 2023 Jerome Marchand <jmarchan@redhat.com> - 0.25.0-3
+- Rebuilt to fix TFBFS (#2171447)
+
 * Wed Jan 18 2023 Fedora Release Engineering <releng@fedoraproject.org> - 0.25.0-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
 
