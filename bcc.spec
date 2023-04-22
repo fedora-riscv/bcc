@@ -3,14 +3,14 @@
 %bcond_with lua
 %else
 # luajit is not available for some architectures
-%ifarch ppc64 ppc64le s390x
+%ifarch ppc64 ppc64le s390x riscv64
 %bcond_with lua
 %else
 %bcond_without lua
 %endif
 %endif
 
-%ifarch x86_64 ppc64 ppc64le aarch64
+%ifarch x86_64 ppc64 ppc64le aarch64 riscv64
 %bcond_without libbpf_tools
 %else
 %bcond_with libbpf_tools
@@ -25,7 +25,7 @@
 
 Name:           bcc
 Version:        0.25.0
-Release:        3%{?dist}
+Release:        3.0.riscv64%{?dist}
 Summary:        BPF Compiler Collection (BCC)
 License:        ASL 2.0
 URL:            https://github.com/iovisor/bcc
@@ -35,7 +35,7 @@ Patch1:         Fix-clang-15-int-to-pointer-conversion-errors.patch
 
 # Arches will be included as upstream support is added and dependencies are
 # satisfied in the respective arches
-ExclusiveArch:  x86_64 %{power64} aarch64 s390x armv7hl
+ExclusiveArch:  x86_64 %{power64} aarch64 s390x armv7hl riscv64
 
 BuildRequires:  bison
 BuildRequires:  cmake >= 2.8.7
@@ -239,6 +239,9 @@ cp -a libbpf-tools/tmp-install/bin/* %{buildroot}/%{_sbindir}/
 %endif
 
 %changelog
+* Sat Apr 22 2023 David Abdurachmanov <davidlt@rivosinc.com> - 0.25.0-3.0.riscv64
+- Add support for riscv64
+
 * Mon Apr 03 2023 Jerome Marchand <jmarchan@redhat.com> - 0.25.0-3
 - Rebuilt to fix TFBFS (#2171447)
 
