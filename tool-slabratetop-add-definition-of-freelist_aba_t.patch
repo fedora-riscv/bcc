@@ -1,0 +1,55 @@
+From 59a1fccfc78482af189150b7937b21244f34e48a Mon Sep 17 00:00:00 2001
+From: Jerome Marchand <jmarchan@redhat.com>
+Date: Thu, 3 Aug 2023 16:11:50 +0200
+Subject: [PATCH] tool/slabratetop: add definition of freelist_aba_t
+
+With recent kernel containing the commit 6801be4f2653 ("slub: Replace
+cmpxchg_double()"), slabratetop fails to compiles with the following
+error:
+
+In file included from /virtual/main.c:86:
+include/linux/slub_def.h:56:3: error: unknown type name 'freelist_aba_t'
+                freelist_aba_t freelist_tid;
+                ^
+2 warnings and 1 error generated.
+Traceback (most recent call last):
+  File "/usr/share/bcc/tools/slabratetop", line 187, in <module>
+    b = BPF(text=bpf_text)
+        ^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/site-packages/bcc/__init__.py", line 479, in __init__
+    raise Exception("Failed to compile BPF module %s" % (src_file or "<text>"))
+Exception: Failed to compile BPF module <text>
+
+Adding the definition of freelist_aba_t fixes the issue.
+---
+ tools/slabratetop.py | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/tools/slabratetop.py b/tools/slabratetop.py
+index 8fbcac5e..8a7d486e 100755
+--- a/tools/slabratetop.py
++++ b/tools/slabratetop.py
+@@ -141,6 +141,20 @@ static inline void *slab_address(const struct slab *slab)
+     return NULL;
+ }
+ 
++#ifdef CONFIG_64BIT
++typedef __uint128_t freelist_full_t;
++#else
++typedef u64 freelist_full_t;
++#endif
++
++typedef union {
++	struct {
++		void *freelist;
++		unsigned long counter;
++	};
++	freelist_full_t full;
++} freelist_aba_t;
++
+ #ifdef CONFIG_SLUB
+ #include <linux/slub_def.h>
+ #else
+-- 
+2.41.0
+

@@ -1,0 +1,31 @@
+From 0973fd70c1c50e57a3db0b09e239b1d1fd3f1c55 Mon Sep 17 00:00:00 2001
+From: Jerome Marchand <jmarchan@redhat.com>
+Date: Fri, 21 Jul 2023 16:10:18 +0200
+Subject: [PATCH] Use bpf_obj_get_info_by_fd() instead of
+ bpf_btf_get_info_by_fd()
+
+The libbpf version in rawhide doesn't have the typed
+bpf_*_get_info_by_fd().
+---
+ src/cc/libbpf.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/cc/libbpf.c b/src/cc/libbpf.c
+index 360fd81d..a3e34da2 100644
+--- a/src/cc/libbpf.c
++++ b/src/cc/libbpf.c
+@@ -727,9 +727,9 @@ static int find_btf_id(const char *module_name, const char *func_name,
+     info.name = ptr_to_u64(name);
+     info.name_len = sizeof(name);
+ 
+-    err = bpf_btf_get_info_by_fd(fd, &info, &len);
++    err = bpf_obj_get_info_by_fd(fd, &info, &len);
+     if (err) {
+-      fprintf(stderr, "bpf_btf_get_info_by_fd failed: %d\n", err);
++      fprintf(stderr, "bpf_obj_get_info_by_fd failed: %d\n", err);
+       goto err_out;
+     }
+ 
+-- 
+2.41.0
+
