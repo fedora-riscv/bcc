@@ -25,13 +25,15 @@
 
 Name:           bcc
 Version:        0.25.0
-Release:        3.0.riscv64%{?dist}
+Release:        3.0.rv64%{?dist}
 Summary:        BPF Compiler Collection (BCC)
 License:        ASL 2.0
 URL:            https://github.com/iovisor/bcc
 Source0:        %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 Patch0:         Fix-bpf_pseudo_fd-type-conversion-error.patch
 Patch1:         Fix-clang-15-int-to-pointer-conversion-errors.patch
+Patch2:         llvm16-fix.patch
+
 
 # Arches will be included as upstream support is added and dependencies are
 # satisfied in the respective arches
@@ -239,6 +241,9 @@ cp -a libbpf-tools/tmp-install/bin/* %{buildroot}/%{_sbindir}/
 %endif
 
 %changelog
+* Mon Oct  9 2023 Yao Nianqing <imbearchild@outlook.com> - 0.25.0-3.0.rv64
+- Fix build for llvm16
+
 * Sat Apr 22 2023 David Abdurachmanov <davidlt@rivosinc.com> - 0.25.0-3.0.riscv64
 - Add support for riscv64
 
