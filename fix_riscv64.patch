@@ -1,0 +1,25 @@
+diff --git a/libbpf-tools/memleak.bpf.c b/libbpf-tools/memleak.bpf.c
+index 63cf905..1846fed 100644
+--- a/libbpf-tools/memleak.bpf.c
++++ b/libbpf-tools/memleak.bpf.c
+@@ -374,8 +374,6 @@ int memleak__mm_page_free(struct trace_event_raw_mm_page_free *ctx)
+ SEC("tracepoint/percpu/percpu_alloc_percpu")
+ int memleak__percpu_alloc_percpu(struct trace_event_raw_percpu_alloc_percpu *ctx)
+ {
+-	gen_alloc_enter(ctx->bytes_alloc);
+-
+ 	return gen_alloc_exit2(ctx, (u64)(ctx->ptr));
+ }
+ 
+diff --git a/libbpf-tools/memleak.c b/libbpf-tools/memleak.c
+index 797781f..ffa6191 100644
+--- a/libbpf-tools/memleak.c
++++ b/libbpf-tools/memleak.c
+@@ -334,7 +334,6 @@ int main(int argc, char *argv[])
+ 
+ 	bpf_map__set_value_size(skel->maps.stack_traces,
+ 				env.perf_max_stack_depth * sizeof(unsigned long));
+-	bpf_map__set_max_entries(skel->maps.stack_traces, env.stack_map_max_entries);
+ 
+ 	// disable kernel tracepoints based on settings or availability
+ 	if (env.kernel_trace) {
